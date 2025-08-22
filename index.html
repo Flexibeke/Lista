@@ -37,6 +37,7 @@
         background: var(--bg);
         color: var(--fg);
       }
+
       header {
         display: flex;
         justify-content: space-between;
@@ -59,6 +60,7 @@
       .spacer {
         flex: 1;
       }
+
       button,
       select,
       input[type="text"],
@@ -77,6 +79,7 @@
       button:active {
         transform: translateY(1px);
       }
+
       .btn {
         display: inline-flex;
         align-items: center;
@@ -98,6 +101,7 @@
         color: white;
         border: 0;
       }
+
       main {
         padding: 16px;
         padding-bottom: 96px;
@@ -118,16 +122,25 @@
       .list {
         display: grid;
         gap: 10px;
+        max-width: 100%;
+        overflow-x: hidden;
+        margin: 0;
+        padding: 0;
       }
       .item {
         display: grid;
-        grid-template-columns: auto 1fr auto;
-        gap: 12px;
+        grid-template-columns: 1fr auto auto;
+        gap: 8px;
         align-items: center;
-        padding: 10px 12px;
+        padding: 8px 12px;
         border: 1px solid var(--border);
         border-radius: 14px;
         background: transparent;
+        word-break: break-word;
+      }
+      .item.urgente {
+        border-color: var(--danger);
+        background-color: rgba(239, 68, 68, 0.1);
       }
       .badge {
         font-size: 12px;
@@ -146,6 +159,7 @@
       .hidden {
         display: none !important;
       }
+
       .nav {
         position: fixed;
         bottom: 8px;
@@ -186,6 +200,7 @@
         color: #fff;
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
       }
+
       .overlay {
         position: fixed;
         inset: 0;
@@ -213,6 +228,7 @@
         gap: 8px;
         align-items: center;
       }
+
       @media (max-width: 480px) {
         main {
           padding: 8px;
@@ -220,7 +236,8 @@
         .item {
           grid-template-columns: 1fr auto;
           gap: 6px;
-          padding: 8px;
+          padding: 6px 8px;
+          font-size: 13px;
         }
         .badge {
           font-size: 10px;
@@ -257,7 +274,6 @@
     </header>
 
     <main>
-      <!-- Tarefas da turma -->
       <section id="tab-turma" class="card">
         <div class="section-title">Tarefas da turma</div>
         <div id="turmaList" class="list"></div>
@@ -266,7 +282,6 @@
         </div>
       </section>
 
-      <!-- Criar tarefa -->
       <section id="tab-criar" class="card hidden">
         <div class="section-title">Criar tarefa</div>
         <div class="grid">
@@ -305,7 +320,6 @@
         </div>
       </section>
 
-      <!-- To-do pessoal -->
       <section id="tab-pessoal" class="card hidden">
         <div class="section-title">Minha To‑do List</div>
         <div class="row" style="margin-bottom: 10px; gap: 8px">
@@ -337,14 +351,12 @@
       </section>
     </main>
 
-    <!-- Navegação -->
     <nav class="nav">
       <button id="btnTabTurma" class="btn active">Tarefas</button>
       <button id="btnFabCriar" class="fab hidden">+</button>
       <button id="btnTabPessoal" class="btn">Minha lista</button>
     </nav>
 
-    <!-- Overlays -->
     <div id="senhaOverlay" class="overlay hidden">
       <div class="modal card">
         <div class="section-title">Acesso</div>
@@ -403,15 +415,13 @@
         analytics = getAnalytics(app),
         db = getFirestore(app);
 
-      const $ = (s) => document.querySelector(s);
-      const $$ = (s) => document.querySelectorAll(s);
-
+      const $ = (s) => document.querySelector(s),
+        $$ = (s) => document.querySelectorAll(s);
       const userId =
         localStorage.getItem("userId") ||
         "u_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
       localStorage.setItem("userId", userId);
 
-      // Tema
       function loadTheme() {
         document.body.classList.toggle(
           "light",
@@ -425,7 +435,6 @@
       $("#themeBtn").addEventListener("click", toggleTheme);
       loadTheme();
 
-      // Tabs
       const tabTurma = $("#tab-turma"),
         tabCriar = $("#tab-criar"),
         tabPessoal = $("#tab-pessoal");
@@ -443,7 +452,6 @@
       btnTabPessoal.addEventListener("click", () => showTab("pessoal"));
       btnFabCriar.addEventListener("click", () => showTab("criar"));
 
-      // Admin
       function isAdmin() {
         return localStorage.getItem("isAdmin") === "true";
       }
@@ -489,9 +497,7 @@
                 localStorage.setItem("entradaLiberada", "true");
                 senhaOverlay.classList.add("hidden");
                 resolve(true);
-              } else {
-                senhaMsg.textContent = "Senha incorreta";
-              }
+              } else senhaMsg.textContent = "Senha incorreta";
             } catch (e) {
               console.error(e);
               senhaMsg.textContent = "Erro ao validar senha";
@@ -500,6 +506,7 @@
         });
       }
 
+      // Admin
       $("#adminBtn").addEventListener("click", () => {
         adminKeyInput.value = "";
         adminMsg.textContent = "";
@@ -525,16 +532,14 @@
             setAdmin(true);
             adminOverlay.classList.add("hidden");
             alert("Você agora é admin!");
-          } else {
-            adminMsg.textContent = "Chave inválida!";
-          }
+          } else adminMsg.textContent = "Chave inválida!";
         } catch (e) {
           console.error(e);
           adminMsg.textContent = "Erro ao verificar chave!";
         }
       });
 
-      // Render turma
+      // Render Turma
       const turmaList = $("#turmaList"),
         turmaEmpty = $("#turmaEmpty");
       const pessoalList = $("#pessoalList"),
@@ -548,8 +553,6 @@
         wrap.className = "item";
         const mid = document.createElement("div");
         mid.innerHTML = `<div class="item-title">${t.descricao}</div><div class="muted">${t.materia}</div>`;
-        const right = document.createElement("span");
-        right.className = "badge";
         const entrega = t.dataEntrega
           ? new Date(
               t.dataEntrega.seconds
@@ -557,6 +560,8 @@
                 : t.dataEntrega
             )
           : null;
+        const right = document.createElement("span");
+        right.className = "badge";
         right.textContent = entrega
           ? "Entrega: " + entrega.toLocaleDateString()
           : "—";
@@ -570,10 +575,20 @@
             usuarioId: userId,
             feito: true,
           });
-          wrap.remove();
+          feitoBtn.disabled = true;
         });
+
+        // Prioridade e cor vermelha para até 3 dias antes
+        if (entrega) {
+          const hoje = new Date();
+          const diffDias = Math.ceil((entrega - hoje) / (1000 * 60 * 60 * 24));
+          if (diffDias <= 3 && diffDias >= 0) {
+            wrap.classList.add("urgente");
+          }
+        }
+
         wrap.append(mid, right, feitoBtn);
-        return wrap;
+        return { wrap, entrega: entrega || new Date(0) }; // para ordenação
       }
 
       function renderPessoalItem(p) {
@@ -589,7 +604,9 @@
         const right = document.createElement("button");
         right.className = "btn btn-danger";
         right.textContent = "Excluir";
+
         wrap.append(cb, mid, right);
+
         cb.addEventListener("change", async () => {
           await setDoc(doc(db, "tarefas_pessoais", p.id), {
             usuarioId: userId,
@@ -598,6 +615,7 @@
             feito: !!cb.checked,
           });
         });
+
         right.addEventListener("click", async () => {
           await setDoc(
             doc(db, "tarefas_pessoais", p.id),
@@ -605,10 +623,10 @@
             { merge: true }
           );
         });
+
         return wrap;
       }
 
-      // Bind turma com status
       let unsubTurma = null,
         unsubPessoais = null;
       function bindTurma() {
@@ -626,19 +644,30 @@
             turmaEmpty.classList.add("hidden");
 
             // buscar status do usuário
-            const statusSnap = await getDoc(
-              doc(db, "status_tarefas", `${tarefas[0]?.id}_${userId}`)
-            );
+            const statusSnap = await getDoc(doc(db, "status_tarefas", "dummy")); // apenas placeholder
             const statusMap = {};
-            const q = query(statusCol, where("usuarioId", "==", userId));
-            onSnapshot(q, (s) => {
-              s.forEach((d) => (statusMap[d.data().tarefaId] = d.data().feito));
-              turmaList.innerHTML = "";
-              tarefas.forEach((t) => {
-                if (!statusMap[t.id])
-                  turmaList.appendChild(renderTurmaItem(t, false));
-              });
+            tarefas.forEach((t) => (statusMap[`${t.id}_${userId}`] = false)); // default
+
+            tarefas.forEach(async (t) => {
+              const statusRef = doc(db, "status_tarefas", `${t.id}_${userId}`);
+              const sSnap = await getDoc(statusRef);
+              if (sSnap.exists())
+                statusMap[`${t.id}_${userId}`] = sSnap.data().feito;
             });
+
+            // Map tarefas com wrapper e entrega
+            const wrappers = tarefas.map((t) =>
+              renderTurmaItem(t, statusMap[`${t.id}_${userId}`])
+            );
+            // Ordenar: urgente primeiro, depois data de entrega crescente
+            wrappers
+              .sort((a, b) => {
+                const aUrgente = a.wrap.classList.contains("urgente") ? 0 : 1;
+                const bUrgente = b.wrap.classList.contains("urgente") ? 0 : 1;
+                if (aUrgente !== bUrgente) return aUrgente - bUrgente;
+                return a.entrega - b.entrega;
+              })
+              .forEach((w) => turmaList.appendChild(w.wrap));
           }
         );
       }
@@ -664,10 +693,9 @@
         );
       }
 
-      // Eventos
       pessoalAdd.addEventListener("click", async () => {
-        const desc = pessoalInput.value.trim(),
-          materia = pessoalMateria.value;
+        const desc = pessoalInput.value.trim();
+        const materia = pessoalMateria.value;
         if (!desc) return;
         await addDoc(pessoaisCol, {
           usuarioId: userId,
@@ -697,7 +725,6 @@
         showTab("turma");
       });
 
-      // Inicial
       (async () => {
         await ensureEntradaLiberada();
         bindTurma();
