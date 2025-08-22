@@ -62,7 +62,8 @@
       button,
       select,
       input[type="text"],
-      input[type="password"] {
+      input[type="password"],
+      input[type="date"] {
         background: var(--card);
         color: var(--fg);
         border: 1px solid var(--border);
@@ -212,19 +213,49 @@
         gap: 8px;
         align-items: center;
       }
+      @media (max-width: 480px) {
+        main {
+          padding: 8px;
+        }
+        .item {
+          grid-template-columns: 1fr auto;
+          gap: 6px;
+          padding: 8px;
+        }
+        .badge {
+          font-size: 10px;
+          padding: 2px 6px;
+        }
+        .btn,
+        .btn-primary,
+        .btn-danger {
+          padding: 6px 10px;
+          font-size: 12px;
+        }
+        .nav {
+          padding: 6px;
+          gap: 4px;
+        }
+        .nav .fab {
+          width: 48px;
+          height: 48px;
+          font-size: 24px;
+        }
+      }
     </style>
   </head>
   <body>
     <header>
       <div class="row">
-        <span class="brand">Tarefas Escolar</span
-        ><span id="envTag" class="badge">Firebase: OFF</span>
+        <span class="brand">Tarefas Escolar</span>
+        <span id="envTag" class="badge">Firebase: OFF</span>
       </div>
       <div class="top-actions">
-        <button id="themeBtn" class="btn btn-ghost">🌓</button
-        ><button id="adminBtn" class="btn btn-ghost">👑</button>
+        <button id="themeBtn" class="btn btn-ghost">🌓</button>
+        <button id="adminBtn" class="btn btn-ghost">👑</button>
       </div>
     </header>
+
     <main>
       <section id="tab-turma" class="card">
         <div class="section-title">Tarefas da turma</div>
@@ -233,37 +264,46 @@
           Nenhuma tarefa por enquanto.
         </div>
       </section>
+
       <section id="tab-criar" class="card hidden">
         <div class="section-title">Criar tarefa</div>
         <div class="grid">
           <div class="grid cols-2">
             <div class="grid">
-              <label>Matéria</label
-              ><select id="materia">
+              <label>Matéria</label>
+              <select id="materia">
                 <option>Matemática</option>
                 <option>Português</option>
                 <option>Ciências</option>
-                <option>História</option>
                 <option>Geografia</option>
                 <option>Inglês</option>
                 <option>Artes</option>
                 <option>Educação Física</option>
+                <option>Lógica de Programação</option>
+                <option>IMC</option>
+                <option>ITI</option>
               </select>
             </div>
             <div class="grid">
-              <label>O que é para fazer</label
-              ><input
+              <label>O que é para fazer</label>
+              <input
                 type="text"
                 id="descricao"
                 placeholder="Ex.: Copiar pág.125..."
               />
             </div>
           </div>
+          <div class="grid">
+            <label>Data de entrega</label>
+            <input type="date" id="dataEntrega" />
+          </div>
           <div class="row" style="justify-content: flex-end; gap: 8px">
             <button id="criarBtn" class="btn btn-primary">Salvar tarefa</button>
           </div>
         </div>
       </section>
+
+      <!-- To-do pessoal atualizado -->
       <section id="tab-pessoal" class="card hidden">
         <div class="section-title">Minha To‑do List</div>
         <div class="row" style="margin-bottom: 10px; gap: 8px">
@@ -272,7 +312,21 @@
             id="pessoalInput"
             placeholder="Nova tarefa pessoal"
             style="flex: 1"
-          /><button id="pessoalAdd" class="btn btn-primary">Adicionar</button>
+          />
+          <select id="pessoalMateria">
+            <option>Não-escolar</option>
+            <option>Matemática</option>
+            <option>Português</option>
+            <option>Ciências</option>
+            <option>Geografia</option>
+            <option>Inglês</option>
+            <option>Artes</option>
+            <option>Educação Física</option>
+            <option>Lógica de Programação</option>
+            <option>IMC</option>
+            <option>ITI</option>
+          </select>
+          <button id="pessoalAdd" class="btn btn-primary">Adicionar</button>
         </div>
         <div id="pessoalList" class="list"></div>
         <div id="pessoalEmpty" class="muted" style="margin-top: 8px">
@@ -280,17 +334,19 @@
         </div>
       </section>
     </main>
+
     <nav class="nav">
       <button id="btnTabTurma" class="btn active">Tarefas</button>
       <button id="btnFabCriar" class="fab hidden">+</button>
       <button id="btnTabPessoal" class="btn">Minha lista</button>
     </nav>
+
     <div id="senhaOverlay" class="overlay hidden">
       <div class="modal card">
         <div class="section-title">Acesso</div>
         <div class="grid">
-          <label>Digite a senha de entrada</label
-          ><input id="senhaInput" type="password" />
+          <label>Digite a senha de entrada</label>
+          <input id="senhaInput" type="password" />
           <div class="row" style="justify-content: flex-end; gap: 8px">
             <button id="senhaOk" class="btn btn-primary">Entrar</button>
           </div>
@@ -298,20 +354,22 @@
         </div>
       </div>
     </div>
+
     <div id="adminOverlay" class="overlay hidden">
       <div class="modal card">
         <div class="section-title">Entrar como Admin</div>
         <div class="grid">
-          <label>Chave de admin</label
-          ><input id="adminKeyInput" type="password" />
+          <label>Chave de admin</label>
+          <input id="adminKeyInput" type="password" />
           <div class="row" style="justify-content: flex-end; gap: 8px">
-            <button id="adminCancel" class="btn">Cancelar</button
-            ><button id="adminOk" class="btn btn-primary">Confirmar</button>
+            <button id="adminCancel" class="btn">Cancelar</button>
+            <button id="adminOk" class="btn btn-primary">Confirmar</button>
           </div>
           <div id="adminMsg" class="muted"></div>
         </div>
       </div>
     </div>
+
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
       import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
@@ -343,6 +401,7 @@
 
       const $ = (s) => document.querySelector(s),
         $$ = (s) => document.querySelectorAll(s);
+
       const userId =
         localStorage.getItem("userId") ||
         "u_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -399,7 +458,6 @@
         adminMsg = $("#adminMsg");
       const cfgDocRef = doc(db, "config", "app"),
         tarefasTurmaCol = collection(db, "tarefas_turma"),
-        statusCol = collection(db, "status_tarefas"),
         pessoaisCol = collection(db, "tarefas_pessoais");
 
       async function ensureEntradaLiberada() {
@@ -434,17 +492,15 @@
         });
       }
 
-      // BOTÃO DE ADMIN
-      adminBtn.addEventListener("click", () => {
+      // Admin
+      $("#adminBtn").addEventListener("click", () => {
         adminKeyInput.value = "";
         adminMsg.textContent = "";
         adminOverlay.classList.remove("hidden");
       });
-
-      adminCancel.addEventListener("click", () => {
-        adminOverlay.classList.add("hidden");
-      });
-
+      adminCancel.addEventListener("click", () =>
+        adminOverlay.classList.add("hidden")
+      );
       adminOk.addEventListener("click", async () => {
         const key = adminKeyInput.value.trim();
         if (!key) {
@@ -471,57 +527,75 @@
         }
       });
 
-      // Demais funções: tarefas, pessoais, criação
+      // Render itens
       const turmaList = $("#turmaList"),
         turmaEmpty = $("#turmaEmpty");
       const pessoalList = $("#pessoalList"),
         pessoalEmpty = $("#pessoalEmpty");
       const pessoalInput = $("#pessoalInput"),
+        pessoalMateria = $("#pessoalMateria"),
         pessoalAdd = $("#pessoalAdd");
 
       function renderTurmaItem(t) {
         const wrap = document.createElement("div");
         wrap.className = "item";
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.dataset.tarefaId = t.id;
         const mid = document.createElement("div");
         mid.innerHTML = `<div class="item-title">${t.descricao}</div><div class="muted">${t.materia}</div>`;
         const right = document.createElement("span");
         right.className = "badge";
-        const d = t.data
-          ? new Date(t.data.seconds ? t.data.seconds * 1000 : t.data)
+        const entrega = t.dataEntrega
+          ? new Date(
+              t.dataEntrega.seconds
+                ? t.dataEntrega.seconds * 1000
+                : t.dataEntrega
+            )
           : null;
-        right.textContent = d ? d.toLocaleDateString() : "—";
-        wrap.append(cb, mid, right);
-        cb.addEventListener("change", async (ev) => {
+        right.textContent = entrega
+          ? "Entrega: " + entrega.toLocaleDateString()
+          : "—";
+        const feitoBtn = document.createElement("button");
+        feitoBtn.className = "btn btn-primary";
+        feitoBtn.textContent = "Feito";
+        feitoBtn.addEventListener("click", async () => {
           await setDoc(doc(db, "status_tarefas", `${t.id}_${userId}`), {
             tarefaId: t.id,
             usuarioId: userId,
-            feito: ev.target.checked,
+            feito: true,
           });
+          wrap.remove();
         });
+        wrap.append(mid, right, feitoBtn);
         return wrap;
       }
+
       function renderPessoalItem(p) {
         const wrap = document.createElement("div");
         wrap.className = "item";
+
         const cb = document.createElement("input");
         cb.type = "checkbox";
         cb.checked = !!p.feito;
+
         const mid = document.createElement("div");
-        mid.innerHTML = `<div class="item-title">${p.descricao}</div><div class="muted">Pessoal</div>`;
+        mid.innerHTML = `<div class="item-title">${
+          p.descricao
+        }</div><div class="muted">${p.materia || "Não-escolar"}</div>`;
+
         const right = document.createElement("button");
         right.className = "btn btn-danger";
         right.textContent = "Excluir";
+
         wrap.append(cb, mid, right);
+
         cb.addEventListener("change", async () => {
           await setDoc(doc(db, "tarefas_pessoais", p.id), {
             usuarioId: userId,
             descricao: p.descricao,
+            materia: p.materia,
             feito: !!cb.checked,
           });
         });
+
         right.addEventListener("click", async () => {
           await setDoc(
             doc(db, "tarefas_pessoais", p.id),
@@ -529,11 +603,12 @@
             { merge: true }
           );
         });
+
         return wrap;
       }
 
+      // Bind
       let unsubTurma = null,
-        unsubStatus = null,
         unsubPessoais = null;
       function bindTurma() {
         if (unsubTurma) unsubTurma();
@@ -549,24 +624,10 @@
             }
             turmaEmpty.classList.add("hidden");
             tarefas.forEach((t) => turmaList.appendChild(renderTurmaItem(t)));
-            syncStatusCheckboxes();
           }
         );
       }
-      function syncStatusCheckboxes() {
-        if (unsubStatus) unsubStatus();
-        unsubStatus = onSnapshot(
-          query(statusCol, where("usuarioId", "==", userId)),
-          (snap) => {
-            const mapa = new Map();
-            snap.forEach((s) => mapa.set(s.data().tarefaId, !!s.data().feito));
-            $$('#turmaList input[type="checkbox"]').forEach((cb) => {
-              const val = mapa.get(cb.dataset.tarefaId);
-              if (val !== undefined) cb.checked = val;
-            });
-          }
-        );
-      }
+
       function bindPessoais() {
         if (unsubPessoais) unsubPessoais();
         unsubPessoais = onSnapshot(
@@ -587,31 +648,41 @@
           }
         );
       }
+
+      // Eventos
       pessoalAdd.addEventListener("click", async () => {
         const desc = pessoalInput.value.trim();
+        const materia = pessoalMateria.value;
         if (!desc) return;
         await addDoc(pessoaisCol, {
           usuarioId: userId,
           descricao: desc,
+          materia: materia,
           feito: false,
         });
         pessoalInput.value = "";
+        pessoalMateria.value = "Não-escolar";
       });
+
       $("#criarBtn").addEventListener("click", async () => {
         const desc = $("#descricao").value.trim();
         if (!desc) {
           alert("Preencha a descrição");
           return;
         }
+        const dataEntregaValue = $("#dataEntrega").value;
         await addDoc(tarefasTurmaCol, {
           descricao: desc,
           materia: $("#materia").value,
           data: new Date(),
+          dataEntrega: dataEntregaValue ? new Date(dataEntregaValue) : null,
         });
         $("#descricao").value = "";
+        $("#dataEntrega").value = "";
         showTab("turma");
       });
 
+      // Inicial
       (async () => {
         await ensureEntradaLiberada();
         bindTurma();
