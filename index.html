@@ -3,6 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="manifest" href="manifest.json" />
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("sw.js")
+            .then((reg) => console.log("SW registrado:", reg))
+            .catch((err) => console.error("Falha ao registrar SW:", err));
+        });
+      }
+    </script>
+
     <title>Tarefas Escolar</title>
     <style>
       :root {
@@ -13,6 +25,7 @@
         --accent: #22c55e;
         --danger: #ef4444;
         --border: #1f2937;
+        --done: #3f3f3f;
       }
       .light {
         --bg: #f6f7fb;
@@ -37,7 +50,6 @@
         background: var(--bg);
         color: var(--fg);
       }
-
       header {
         display: flex;
         justify-content: space-between;
@@ -60,7 +72,6 @@
       .spacer {
         flex: 1;
       }
-
       button,
       select,
       input[type="text"],
@@ -79,7 +90,6 @@
       button:active {
         transform: translateY(1px);
       }
-
       .btn {
         display: inline-flex;
         align-items: center;
@@ -101,13 +111,17 @@
         color: white;
         border: 0;
       }
-
+      .btn-done {
+        background: #3f3f3f;
+        color: #fff;
+      }
       main {
         padding: 16px;
         padding-bottom: 96px;
         max-width: 900px;
         width: 100%;
         margin: 0 auto;
+        box-sizing: border-box;
       }
       .card {
         background: var(--card);
@@ -122,25 +136,28 @@
       .list {
         display: grid;
         gap: 10px;
-        max-width: 100%;
-        overflow-x: hidden;
-        margin: 0;
-        padding: 0;
+        max-height: 70vh;
+        overflow-y: auto;
       }
       .item {
         display: grid;
-        grid-template-columns: 1fr auto auto;
-        gap: 8px;
+        gap: 6px;
         align-items: center;
-        padding: 8px 12px;
+        padding: 10px 12px;
         border: 1px solid var(--border);
         border-radius: 14px;
         background: transparent;
-        word-break: break-word;
+        box-sizing: border-box;
       }
-      .item.urgente {
-        border-color: var(--danger);
-        background-color: rgba(239, 68, 68, 0.1);
+      .item .row-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6px;
+      }
+      .item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
       }
       .badge {
         font-size: 12px;
@@ -159,7 +176,6 @@
       .hidden {
         display: none !important;
       }
-
       .nav {
         position: fixed;
         bottom: 8px;
@@ -200,7 +216,6 @@
         color: #fff;
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
       }
-
       .overlay {
         position: fixed;
         inset: 0;
@@ -228,16 +243,24 @@
         gap: 8px;
         align-items: center;
       }
-
+      .urgente {
+        background: #fca326;
+        color: #fff;
+      }
+      .atrasada {
+        background: #f28b82;
+        color: #fff;
+      }
       @media (max-width: 480px) {
         main {
           padding: 8px;
         }
-        .item {
-          grid-template-columns: 1fr auto;
-          gap: 6px;
-          padding: 6px 8px;
-          font-size: 13px;
+        .item .row-item {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .item input[type="checkbox"] {
+          margin-bottom: 4px;
         }
         .badge {
           font-size: 10px;
@@ -322,14 +345,14 @@
 
       <section id="tab-pessoal" class="card hidden">
         <div class="section-title">Minha To‑do List</div>
-        <div class="row" style="margin-bottom: 10px; gap: 8px">
+        <div class="row" style="margin-bottom: 10px; gap: 8px; flex-wrap: wrap">
           <input
             type="text"
             id="pessoalInput"
             placeholder="Nova tarefa pessoal"
-            style="flex: 1"
+            style="flex: 1 1 200px"
           />
-          <select id="pessoalMateria">
+          <select id="pessoalMateria" style="flex: 1 1 120px">
             <option>Não-escolar</option>
             <option>Matemática</option>
             <option>Português</option>
@@ -406,7 +429,7 @@
         apiKey: "AIzaSyBPZTPNlTjiYZrPdrwnCB5KJ9Z4y9tM1P4",
         authDomain: "tarefas-escolares-a4464.firebaseapp.com",
         projectId: "tarefas-escolares-a4464",
-        storageBucket: "tarefas-escolares-a4464.firebasestorage.app",
+        storageBucket: "tarefas-escolares-a4464.appspot.com",
         messagingSenderId: "62405653853",
         appId: "1:62405653853:web:72e28ab1aa00995be024b4",
         measurementId: "G-XZVW5G135E",
@@ -415,321 +438,309 @@
         analytics = getAnalytics(app),
         db = getFirestore(app);
 
-      const $ = (s) => document.querySelector(s),
-        $$ = (s) => document.querySelectorAll(s);
+      const $ = (s) => document.querySelector(s);
       const userId =
         localStorage.getItem("userId") ||
         "u_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
       localStorage.setItem("userId", userId);
 
-      function loadTheme() {
-        document.body.classList.toggle(
-          "light",
-          localStorage.getItem("theme") === "light"
-        );
-      }
-      function toggleTheme() {
-        const t = document.body.classList.toggle("light");
-        localStorage.setItem("theme", t ? "light" : "dark");
-      }
-      $("#themeBtn").addEventListener("click", toggleTheme);
-      loadTheme();
-
-      const tabTurma = $("#tab-turma"),
-        tabCriar = $("#tab-criar"),
-        tabPessoal = $("#tab-pessoal");
-      const btnTabTurma = $("#btnTabTurma"),
-        btnFabCriar = $("#btnFabCriar"),
-        btnTabPessoal = $("#btnTabPessoal");
-      function showTab(name) {
-        tabTurma.classList.toggle("hidden", name !== "turma");
-        tabCriar.classList.toggle("hidden", name !== "criar");
-        tabPessoal.classList.toggle("hidden", name !== "pessoal");
-        btnTabTurma.classList.toggle("active", name === "turma");
-        btnTabPessoal.classList.toggle("active", name === "pessoal");
-      }
-      btnTabTurma.addEventListener("click", () => showTab("turma"));
-      btnTabPessoal.addEventListener("click", () => showTab("pessoal"));
-      btnFabCriar.addEventListener("click", () => showTab("criar"));
-
-      function isAdmin() {
-        return localStorage.getItem("isAdmin") === "true";
-      }
-      function setAdmin(v) {
-        localStorage.setItem("isAdmin", v ? "true" : "false");
-        btnFabCriar.classList.toggle("hidden", !v);
-        if (!v && !tabCriar.classList.contains("hidden")) showTab("turma");
-      }
-      setAdmin(isAdmin());
-
-      const senhaOverlay = $("#senhaOverlay"),
-        senhaInput = $("#senhaInput"),
-        senhaOk = $("#senhaOk"),
-        senhaMsg = $("#senhaMsg");
-      const adminOverlay = $("#adminOverlay"),
-        adminKeyInput = $("#adminKeyInput"),
-        adminOk = $("#adminOk"),
-        adminCancel = $("#adminCancel"),
-        adminMsg = $("#adminMsg");
-      const cfgDocRef = doc(db, "config", "app"),
-        tarefasTurmaCol = collection(db, "tarefas_turma"),
-        pessoaisCol = collection(db, "tarefas_pessoais"),
-        statusCol = collection(db, "status_tarefas");
-
-      async function ensureEntradaLiberada() {
-        if (localStorage.getItem("entradaLiberada") === "true") return true;
-        senhaOverlay.classList.remove("hidden");
-        return new Promise((resolve) => {
-          senhaOk.onclick = async () => {
-            const s = senhaInput.value.trim();
-            if (!s) {
-              senhaMsg.textContent = "Digite a senha";
-              return;
-            }
-            try {
-              const snap = await getDoc(cfgDocRef);
-              if (!snap.exists()) {
-                senhaMsg.textContent = "Config não encontrada";
-                return;
-              }
-              const { senhaEntrada } = snap.data();
-              if (senhaEntrada && s === String(senhaEntrada)) {
-                localStorage.setItem("entradaLiberada", "true");
-                senhaOverlay.classList.add("hidden");
-                resolve(true);
-              } else senhaMsg.textContent = "Senha incorreta";
-            } catch (e) {
-              console.error(e);
-              senhaMsg.textContent = "Erro ao validar senha";
-            }
-          };
-        });
-      }
-
-      // Admin
-      $("#adminBtn").addEventListener("click", () => {
-        adminKeyInput.value = "";
-        adminMsg.textContent = "";
-        adminOverlay.classList.remove("hidden");
-      });
-      adminCancel.addEventListener("click", () =>
-        adminOverlay.classList.add("hidden")
-      );
-      adminOk.addEventListener("click", async () => {
-        const key = adminKeyInput.value.trim();
-        if (!key) {
-          adminMsg.textContent = "Digite a chave!";
-          return;
+      document.addEventListener("DOMContentLoaded", () => {
+        // theme
+        const themeBtn = $("#themeBtn");
+        function loadTheme() {
+          document.body.classList.toggle(
+            "light",
+            localStorage.getItem("theme") === "light"
+          );
         }
-        try {
-          const snap = await getDoc(cfgDocRef);
-          if (!snap.exists()) {
-            adminMsg.textContent = "Documento de configuração não encontrado!";
+        function toggleTheme() {
+          const t = document.body.classList.toggle("light");
+          localStorage.setItem("theme", t ? "light" : "dark");
+        }
+        themeBtn.addEventListener("click", toggleTheme);
+        loadTheme();
+
+        // tabs
+        const tabTurma = $("#tab-turma"),
+          tabCriar = $("#tab-criar"),
+          tabPessoal = $("#tab-pessoal");
+        const btnTabTurma = $("#btnTabTurma"),
+          btnFabCriar = $("#btnFabCriar"),
+          btnTabPessoal = $("#btnTabPessoal");
+        function showTab(name) {
+          tabTurma.classList.toggle("hidden", name !== "turma");
+          tabCriar.classList.toggle("hidden", name !== "criar");
+          tabPessoal.classList.toggle("hidden", name !== "pessoal");
+          btnTabTurma.classList.toggle("active", name === "turma");
+          btnTabPessoal.classList.toggle("active", name === "pessoal");
+        }
+        btnTabTurma.addEventListener("click", () => showTab("turma"));
+        btnTabPessoal.addEventListener("click", () => showTab("pessoal"));
+        btnFabCriar.addEventListener("click", () => showTab("criar"));
+
+        // admin
+        const adminBtn = $("#adminBtn"),
+          adminOverlay = $("#adminOverlay"),
+          adminKeyInput = $("#adminKeyInput"),
+          adminOk = $("#adminOk"),
+          adminCancel = $("#adminCancel"),
+          adminMsg = $("#adminMsg");
+        function isAdmin() {
+          return localStorage.getItem("isAdmin") === "true";
+        }
+        function setAdmin(v) {
+          localStorage.setItem("isAdmin", v ? "true" : "false");
+          btnFabCriar.classList.toggle("hidden", !v);
+          if (!v && !tabCriar.classList.contains("hidden")) showTab("turma");
+        }
+        setAdmin(isAdmin());
+        adminBtn.addEventListener("click", () => {
+          adminKeyInput.value = "";
+          adminMsg.textContent = "";
+          adminOverlay.classList.remove("hidden");
+        });
+        adminCancel.addEventListener("click", () =>
+          adminOverlay.classList.add("hidden")
+        );
+        adminOk.addEventListener("click", async () => {
+          const key = adminKeyInput.value.trim();
+          if (!key) {
+            adminMsg.textContent = "Digite a chave!";
             return;
           }
-          const { adminKeys = [] } = snap.data();
-          if (adminKeys.includes(key)) {
-            setAdmin(true);
-            adminOverlay.classList.add("hidden");
-            alert("Você agora é admin!");
-          } else adminMsg.textContent = "Chave inválida!";
-        } catch (e) {
-          console.error(e);
-          adminMsg.textContent = "Erro ao verificar chave!";
-        }
-      });
-
-      // Render Turma
-      const turmaList = $("#turmaList"),
-        turmaEmpty = $("#turmaEmpty");
-      const pessoalList = $("#pessoalList"),
-        pessoalEmpty = $("#pessoalEmpty");
-      const pessoalInput = $("#pessoalInput"),
-        pessoalMateria = $("#pessoalMateria"),
-        pessoalAdd = $("#pessoalAdd");
-
-      function renderTurmaItem(t, feito = false) {
-        const wrap = document.createElement("div");
-        wrap.className = "item";
-        const mid = document.createElement("div");
-        mid.innerHTML = `<div class="item-title">${t.descricao}</div><div class="muted">${t.materia}</div>`;
-        const entrega = t.dataEntrega
-          ? new Date(
-              t.dataEntrega.seconds
-                ? t.dataEntrega.seconds * 1000
-                : t.dataEntrega
-            )
-          : null;
-        const right = document.createElement("span");
-        right.className = "badge";
-        right.textContent = entrega
-          ? "Entrega: " + entrega.toLocaleDateString()
-          : "—";
-        const feitoBtn = document.createElement("button");
-        feitoBtn.className = "btn btn-primary";
-        feitoBtn.textContent = "Feito";
-        if (feito) feitoBtn.disabled = true;
-        feitoBtn.addEventListener("click", async () => {
-          await setDoc(doc(db, "status_tarefas", `${t.id}_${userId}`), {
-            tarefaId: t.id,
-            usuarioId: userId,
-            feito: true,
-          });
-          feitoBtn.disabled = true;
-        });
-
-        // Prioridade e cor vermelha para até 3 dias antes
-        if (entrega) {
-          const hoje = new Date();
-          const diffDias = Math.ceil((entrega - hoje) / (1000 * 60 * 60 * 24));
-          if (diffDias <= 3 && diffDias >= 0) {
-            wrap.classList.add("urgente");
-          }
-        }
-
-        wrap.append(mid, right, feitoBtn);
-        return { wrap, entrega: entrega || new Date(0) }; // para ordenação
-      }
-
-      function renderPessoalItem(p) {
-        const wrap = document.createElement("div");
-        wrap.className = "item";
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.checked = !!p.feito;
-        const mid = document.createElement("div");
-        mid.innerHTML = `<div class="item-title">${
-          p.descricao
-        }</div><div class="muted">${p.materia || "Não-escolar"}</div>`;
-        const right = document.createElement("button");
-        right.className = "btn btn-danger";
-        right.textContent = "Excluir";
-
-        wrap.append(cb, mid, right);
-
-        cb.addEventListener("change", async () => {
-          await setDoc(doc(db, "tarefas_pessoais", p.id), {
-            usuarioId: userId,
-            descricao: p.descricao,
-            materia: p.materia,
-            feito: !!cb.checked,
-          });
-        });
-
-        right.addEventListener("click", async () => {
-          await setDoc(
-            doc(db, "tarefas_pessoais", p.id),
-            { _deleted: true },
-            { merge: true }
-          );
-        });
-
-        return wrap;
-      }
-
-      let unsubTurma = null,
-        unsubPessoais = null;
-      function bindTurma() {
-        if (unsubTurma) unsubTurma();
-        unsubTurma = onSnapshot(
-          query(tarefasTurmaCol, orderBy("data", "desc")),
-          async (snap) => {
-            const tarefas = [];
-            snap.forEach((d) => tarefas.push({ id: d.id, ...d.data() }));
-            turmaList.innerHTML = "";
-            if (!tarefas.length) {
-              turmaEmpty.classList.remove("hidden");
+          try {
+            const snap = await getDoc(doc(db, "config", "app"));
+            if (!snap.exists()) {
+              adminMsg.textContent =
+                "Documento de configuração não encontrado!";
               return;
             }
-            turmaEmpty.classList.add("hidden");
+            const { adminKeys = [] } = snap.data();
+            if (adminKeys.includes(key)) {
+              setAdmin(true);
+              adminOverlay.classList.add("hidden");
+              alert("Você agora é admin!");
+            } else {
+              adminMsg.textContent = "Chave inválida!";
+            }
+          } catch (e) {
+            console.error(e);
+            adminMsg.textContent = "Erro ao verificar chave!";
+          }
+        });
 
-            // buscar status do usuário
-            const statusSnap = await getDoc(doc(db, "status_tarefas", "dummy")); // apenas placeholder
-            const statusMap = {};
-            tarefas.forEach((t) => (statusMap[`${t.id}_${userId}`] = false)); // default
+        // tarefas
+        const turmaList = $("#turmaList"),
+          turmaEmpty = $("#turmaEmpty");
+        const pessoalList = $("#pessoalList"),
+          pessoalEmpty = $("#pessoalEmpty");
+        const pessoalInput = $("#pessoalInput"),
+          pessoalMateria = $("#pessoalMateria"),
+          pessoalAdd = $("#pessoalAdd");
 
-            tarefas.forEach(async (t) => {
-              const statusRef = doc(db, "status_tarefas", `${t.id}_${userId}`);
-              const sSnap = await getDoc(statusRef);
-              if (sSnap.exists())
-                statusMap[`${t.id}_${userId}`] = sSnap.data().feito;
-            });
-
-            // Map tarefas com wrapper e entrega
-            const wrappers = tarefas.map((t) =>
-              renderTurmaItem(t, statusMap[`${t.id}_${userId}`])
+        function renderTurmaItem(t, status = {}) {
+          if (status.excluido) return null;
+          const wrap = document.createElement("div");
+          wrap.className = "item";
+          const mid = document.createElement("div");
+          mid.innerHTML = `<div class="item-title">${
+            t.descricao
+          }</div><div class="muted">${t.materia || "Não-escolar"}</div>`;
+          const feitoBtn = document.createElement("button");
+          feitoBtn.className = "btn";
+          feitoBtn.textContent = status.feito ? "Feito" : "Marcar feito";
+          feitoBtn.classList.add(status.feito ? "btn-done" : "btn-primary");
+          feitoBtn.disabled = !!status.feito;
+          const excluirBtn = document.createElement("button");
+          excluirBtn.className = "btn btn-danger";
+          excluirBtn.textContent = "Excluir";
+          excluirBtn.style.display = status.feito ? "inline-flex" : "none";
+          if (status.feito) wrap.style.background = "#3f3f3f";
+          const entrega = t.dataEntrega
+            ? new Date(t.dataEntrega.seconds * 1000 || t.dataEntrega)
+            : null;
+          if (entrega) {
+            const hoje = new Date();
+            const diffDias = Math.ceil(
+              (entrega - hoje) / (1000 * 60 * 60 * 24)
             );
-            // Ordenar: urgente primeiro, depois data de entrega crescente
-            wrappers
-              .sort((a, b) => {
-                const aUrgente = a.wrap.classList.contains("urgente") ? 0 : 1;
-                const bUrgente = b.wrap.classList.contains("urgente") ? 0 : 1;
-                if (aUrgente !== bUrgente) return aUrgente - bUrgente;
-                return a.entrega - b.entrega;
-              })
-              .forEach((w) => turmaList.appendChild(w.wrap));
+            if (diffDias < 0) wrap.classList.add("atrasada");
+            else if (diffDias <= 3) wrap.classList.add("urgente");
           }
-        );
-      }
-
-      function bindPessoais() {
-        if (unsubPessoais) unsubPessoais();
-        unsubPessoais = onSnapshot(
-          query(pessoaisCol, where("usuarioId", "==", userId)),
-          (snap) => {
-            const items = [];
-            snap.forEach((d) => {
-              const data = d.data();
-              if (!data._deleted) items.push({ id: d.id, ...data });
+          feitoBtn.addEventListener("click", async () => {
+            await setDoc(doc(db, "status_tarefas", `${t.id}_${userId}`), {
+              tarefaId: t.id,
+              usuarioId: userId,
+              feito: true,
             });
-            pessoalList.innerHTML = "";
-            if (!items.length) {
-              pessoalEmpty.classList.remove("hidden");
-              return;
-            }
-            pessoalEmpty.classList.add("hidden");
-            items.forEach((p) => pessoalList.appendChild(renderPessoalItem(p)));
-          }
-        );
-      }
-
-      pessoalAdd.addEventListener("click", async () => {
-        const desc = pessoalInput.value.trim();
-        const materia = pessoalMateria.value;
-        if (!desc) return;
-        await addDoc(pessoaisCol, {
-          usuarioId: userId,
-          descricao: desc,
-          materia: materia,
-          feito: false,
-        });
-        pessoalInput.value = "";
-        pessoalMateria.value = "Não-escolar";
-      });
-
-      $("#criarBtn").addEventListener("click", async () => {
-        const desc = $("#descricao").value.trim();
-        if (!desc) {
-          alert("Preencha a descrição");
-          return;
+            feitoBtn.disabled = true;
+            feitoBtn.textContent = "Feito";
+            feitoBtn.classList.remove("btn-primary");
+            feitoBtn.classList.add("btn-done");
+            wrap.style.background = "#3f3f3f";
+            excluirBtn.style.display = "inline-flex";
+          });
+          excluirBtn.addEventListener("click", async () => {
+            await setDoc(doc(db, "status_tarefas", `${t.id}_${userId}`), {
+              tarefaId: t.id,
+              usuarioId: userId,
+              feito: status.feito || false,
+              excluido: true,
+            });
+            wrap.remove();
+          });
+          const rowItem = document.createElement("div");
+          rowItem.className = "row-item";
+          rowItem.append(mid, feitoBtn, excluirBtn);
+          wrap.appendChild(rowItem);
+          return { wrap, entrega: entrega || new Date(0) };
         }
-        const dataEntregaValue = $("#dataEntrega").value;
-        await addDoc(tarefasTurmaCol, {
-          descricao: desc,
-          materia: $("#materia").value,
-          data: new Date(),
-          dataEntrega: dataEntregaValue ? new Date(dataEntregaValue) : null,
-        });
-        $("#descricao").value = "";
-        $("#dataEntrega").value = "";
-        showTab("turma");
-      });
 
-      (async () => {
-        await ensureEntradaLiberada();
+        function renderPessoalItem(p) {
+          const wrap = document.createElement("div");
+          wrap.className = "item";
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.checked = !!p.feito;
+          const mid = document.createElement("div");
+          mid.innerHTML = `<div class="item-title">${
+            p.descricao
+          }</div><div class="muted">${p.materia || "Não-escolar"}</div>`;
+          const right = document.createElement("button");
+          right.className = "btn btn-danger";
+          right.textContent = "Excluir";
+          const rowItem = document.createElement("div");
+          rowItem.className = "row-item";
+          rowItem.append(mid, cb, right);
+          wrap.appendChild(rowItem);
+          cb.addEventListener("change", async () => {
+            await setDoc(doc(db, "tarefas_pessoais", p.id), {
+              usuarioId: userId,
+              descricao: p.descricao,
+              materia: p.materia,
+              feito: !!cb.checked,
+            });
+          });
+          right.addEventListener("click", async () => {
+            await setDoc(
+              doc(db, "tarefas_pessoais", p.id),
+              { _deleted: true },
+              { merge: true }
+            );
+          });
+          return wrap;
+        }
+
+        let unsubTurma = null,
+          unsubPessoais = null;
+        function bindTurma() {
+          if (unsubTurma) unsubTurma();
+          unsubTurma = onSnapshot(
+            query(collection(db, "tarefas_turma"), orderBy("data", "desc")),
+            async (snap) => {
+              const tarefas = [];
+              snap.forEach((d) => tarefas.push({ id: d.id, ...d.data() }));
+              turmaList.innerHTML = "";
+              if (!tarefas.length) {
+                turmaEmpty.classList.remove("hidden");
+                return;
+              }
+              turmaEmpty.classList.add("hidden");
+              const statusSnaps = await Promise.all(
+                tarefas.map((t) =>
+                  getDoc(doc(db, "status_tarefas", `${t.id}_${userId}`))
+                )
+              );
+              const statusMap = {};
+              tarefas.forEach((t, i) => {
+                statusMap[t.id] = statusSnaps[i].exists()
+                  ? statusSnaps[i].data()
+                  : {};
+              });
+              const wrappers = tarefas
+                .map((t) => renderTurmaItem(t, statusMap[t.id]))
+                .filter(Boolean);
+              wrappers
+                .sort((a, b) => {
+                  const aAtr = a.wrap.classList.contains("atrasada")
+                    ? 0
+                    : a.wrap.classList.contains("urgente")
+                    ? 1
+                    : 2;
+                  const bAtr = b.wrap.classList.contains("atrasada")
+                    ? 0
+                    : b.wrap.classList.contains("urgente")
+                    ? 1
+                    : 2;
+                  if (aAtr !== bAtr) return aAtr - bAtr;
+                  return a.entrega - b.entrega;
+                })
+                .forEach((w) => turmaList.appendChild(w.wrap));
+            }
+          );
+        }
+
+        function bindPessoais() {
+          if (unsubPessoais) unsubPessoais();
+          unsubPessoais = onSnapshot(
+            query(
+              collection(db, "tarefas_pessoais"),
+              where("usuarioId", "==", userId)
+            ),
+            (snap) => {
+              const items = [];
+              snap.forEach((d) => {
+                const data = d.data();
+                if (!data._deleted) items.push({ id: d.id, ...data });
+              });
+              pessoalList.innerHTML = "";
+              if (!items.length) {
+                pessoalEmpty.classList.remove("hidden");
+                return;
+              }
+              pessoalEmpty.classList.add("hidden");
+              items.forEach((p) =>
+                pessoalList.appendChild(renderPessoalItem(p))
+              );
+            }
+          );
+        }
+
+        pessoalAdd.addEventListener("click", async () => {
+          const desc = pessoalInput.value.trim();
+          const materia = pessoalMateria.value;
+          if (!desc) return;
+          await addDoc(collection(db, "tarefas_pessoais"), {
+            usuarioId: userId,
+            descricao: desc,
+            materia: materia,
+            feito: false,
+          });
+          pessoalInput.value = "";
+          pessoalMateria.value = "Não-escolar";
+        });
+
+        $("#criarBtn").addEventListener("click", async () => {
+          const desc = $("#descricao").value.trim();
+          if (!desc) {
+            alert("Preencha a descrição");
+            return;
+          }
+          const dataEntregaValue = $("#dataEntrega").value;
+          await addDoc(collection(db, "tarefas_turma"), {
+            descricao: desc,
+            materia: $("#materia").value,
+            data: new Date(),
+            dataEntrega: dataEntregaValue ? new Date(dataEntregaValue) : null,
+          });
+          $("#descricao").value = "";
+          $("#dataEntrega").value = "";
+          showTab("turma");
+        });
+
         bindTurma();
         bindPessoais();
-      })();
+      });
     </script>
   </body>
 </html>
