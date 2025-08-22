@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tarefas Escolar</title>
+    <style>
+      :root {
+        --bg: #0b0f14;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #111827;
+        --accent: #22c55e;
+        --danger: #ef4444;
+        --border: #1f2937;
+      }
+      .light {
+        --bg: #f6f7fb;
+        --fg: #0b0f14;
+        --muted: #4b5563;
+        --card: #fff;
+        --accent: #16a34a;
+        --danger: #dc2626;
+        --border: #e5e7eb;
+        background: var(--bg);
+        color: var(--fg);
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: ui-sans-serif, system-ui;
+      }
+      body {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        background: var(--bg);
+        color: var(--fg);
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        background: var(--card);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+      }
+      .brand {
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .spacer {
+        flex: 1;
+      }
+      button,
+      select,
+      input[type="text"],
+      input[type="password"] {
+        background: var(--card);
+        color: var(--fg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+      button:hover {
+        filter: brightness(1.04);
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 14px;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+        border: 0;
+      }
+      .btn-ghost {
+        background: transparent;
+      }
+      .btn-danger {
+        background: var(--danger);
+        color: white;
+        border: 0;
+      }
+      main {
+        padding: 16px;
+        padding-bottom: 96px;
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 14px;
+      }
+      .section-title {
+        font-weight: 700;
+        margin: 8px 0 12px;
+      }
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+      .item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: transparent;
+      }
+      .badge {
+        font-size: 12px;
+        padding: 4px 8px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        opacity: 0.9;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .item-title {
+        font-weight: 600;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .nav {
+        position: fixed;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 6px;
+        padding: 8px;
+        width: min(700px, calc(100%-16px));
+        z-index: 30;
+      }
+      .nav .btn {
+        justify-content: center;
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: transparent;
+      }
+      .nav .btn.active {
+        background: var(--border);
+      }
+      .nav .fab {
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        display: grid;
+        place-items: center;
+        font-size: 28px;
+        line-height: 1;
+        border: 0;
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+      }
+      .overlay {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 40;
+      }
+      .modal {
+        width: min(520px, 96%);
+      }
+      .grid {
+        display: grid;
+        gap: 10px;
+      }
+      .grid.cols-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+      label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .top-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="row">
+        <span class="brand">Tarefas Escolar</span
+        ><span id="envTag" class="badge">Firebase: OFF</span>
+      </div>
+      <div class="top-actions">
+        <button id="themeBtn" class="btn btn-ghost">🌓</button
+        ><button id="adminBtn" class="btn btn-ghost">👑</button>
+      </div>
+    </header>
+    <main>
+      <section id="tab-turma" class="card">
+        <div class="section-title">Tarefas da turma</div>
+        <div id="turmaList" class="list"></div>
+        <div id="turmaEmpty" class="muted" style="margin-top: 8px">
+          Nenhuma tarefa por enquanto.
+        </div>
+      </section>
+      <section id="tab-criar" class="card hidden">
+        <div class="section-title">Criar tarefa</div>
+        <div class="grid">
+          <div class="grid cols-2">
+            <div class="grid">
+              <label>Matéria</label
+              ><select id="materia">
+                <option>Matemática</option>
+                <option>Português</option>
+                <option>Ciências</option>
+                <option>História</option>
+                <option>Geografia</option>
+                <option>Inglês</option>
+                <option>Artes</option>
+                <option>Educação Física</option>
+              </select>
+            </div>
+            <div class="grid">
+              <label>O que é para fazer</label
+              ><input
+                type="text"
+                id="descricao"
+                placeholder="Ex.: Copiar pág.125..."
+              />
+            </div>
+          </div>
+          <div class="row" style="justify-content: flex-end; gap: 8px">
+            <button id="criarBtn" class="btn btn-primary">Salvar tarefa</button>
+          </div>
+        </div>
+      </section>
+      <section id="tab-pessoal" class="card hidden">
+        <div class="section-title">Minha To‑do List</div>
+        <div class="row" style="margin-bottom: 10px; gap: 8px">
+          <input
+            type="text"
+            id="pessoalInput"
+            placeholder="Nova tarefa pessoal"
+            style="flex: 1"
+          /><button id="pessoalAdd" class="btn btn-primary">Adicionar</button>
+        </div>
+        <div id="pessoalList" class="list"></div>
+        <div id="pessoalEmpty" class="muted" style="margin-top: 8px">
+          Sem tarefas pessoais.
+        </div>
+      </section>
+    </main>
+    <nav class="nav">
+      <button id="btnTabTurma" class="btn active">Tarefas</button>
+      <button id="btnFabCriar" class="fab hidden">+</button>
+      <button id="btnTabPessoal" class="btn">Minha lista</button>
+    </nav>
+    <div id="senhaOverlay" class="overlay hidden">
+      <div class="modal card">
+        <div class="section-title">Acesso</div>
+        <div class="grid">
+          <label>Digite a senha de entrada</label
+          ><input id="senhaInput" type="password" />
+          <div class="row" style="justify-content: flex-end; gap: 8px">
+            <button id="senhaOk" class="btn btn-primary">Entrar</button>
+          </div>
+          <div id="senhaMsg" class="muted"></div>
+        </div>
+      </div>
+    </div>
+    <div id="adminOverlay" class="overlay hidden">
+      <div class="modal card">
+        <div class="section-title">Entrar como Admin</div>
+        <div class="grid">
+          <label>Chave de admin</label
+          ><input id="adminKeyInput" type="password" />
+          <div class="row" style="justify-content: flex-end; gap: 8px">
+            <button id="adminCancel" class="btn">Cancelar</button
+            ><button id="adminOk" class="btn btn-primary">Confirmar</button>
+          </div>
+          <div id="adminMsg" class="muted"></div>
+        </div>
+      </div>
+    </div>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
+      import {
+        getFirestore,
+        collection,
+        doc,
+        getDoc,
+        setDoc,
+        addDoc,
+        onSnapshot,
+        query,
+        where,
+        orderBy,
+      } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyBPZTPNlTjiYZrPdrwnCB5KJ9Z4y9tM1P4",
+        authDomain: "tarefas-escolares-a4464.firebaseapp.com",
+        projectId: "tarefas-escolares-a4464",
+        storageBucket: "tarefas-escolares-a4464.firebasestorage.app",
+        messagingSenderId: "62405653853",
+        appId: "1:62405653853:web:72e28ab1aa00995be024b4",
+        measurementId: "G-XZVW5G135E",
+      };
+      const app = initializeApp(firebaseConfig),
+        analytics = getAnalytics(app),
+        db = getFirestore(app);
+
+      const $ = (s) => document.querySelector(s),
+        $$ = (s) => document.querySelectorAll(s);
+      const userId =
+        localStorage.getItem("userId") ||
+        "u_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem("userId", userId);
+
+      function loadTheme() {
+        document.body.classList.toggle(
+          "light",
+          localStorage.getItem("theme") === "light"
+        );
+      }
+      function toggleTheme() {
+        const t = document.body.classList.toggle("light");
+        localStorage.setItem("theme", t ? "light" : "dark");
+      }
+      $("#themeBtn").addEventListener("click", toggleTheme);
+      loadTheme();
+
+      const tabTurma = $("#tab-turma"),
+        tabCriar = $("#tab-criar"),
+        tabPessoal = $("#tab-pessoal");
+      const btnTabTurma = $("#btnTabTurma"),
+        btnFabCriar = $("#btnFabCriar"),
+        btnTabPessoal = $("#btnTabPessoal");
+      function showTab(name) {
+        tabTurma.classList.toggle("hidden", name !== "turma");
+        tabCriar.classList.toggle("hidden", name !== "criar");
+        tabPessoal.classList.toggle("hidden", name !== "pessoal");
+        btnTabTurma.classList.toggle("active", name === "turma");
+        btnTabPessoal.classList.toggle("active", name === "pessoal");
+      }
+      btnTabTurma.addEventListener("click", () => showTab("turma"));
+      btnTabPessoal.addEventListener("click", () => showTab("pessoal"));
+      btnFabCriar.addEventListener("click", () => showTab("criar"));
+
+      function isAdmin() {
+        return localStorage.getItem("isAdmin") === "true";
+      }
+      function setAdmin(v) {
+        localStorage.setItem("isAdmin", v ? "true" : "false");
+        btnFabCriar.classList.toggle("hidden", !v);
+        if (!v && !tabCriar.classList.contains("hidden")) showTab("turma");
+      }
+      setAdmin(isAdmin());
+
+      const senhaOverlay = $("#senhaOverlay"),
+        senhaInput = $("#senhaInput"),
+        senhaOk = $("#senhaOk"),
+        senhaMsg = $("#senhaMsg");
+      const adminOverlay = $("#adminOverlay"),
+        adminKeyInput = $("#adminKeyInput"),
+        adminOk = $("#adminOk"),
+        adminCancel = $("#adminCancel"),
+        adminMsg = $("#adminMsg");
+      const cfgDocRef = doc(db, "config", "app"),
+        tarefasTurmaCol = collection(db, "tarefas_turma"),
+        statusCol = collection(db, "status_tarefas"),
+        pessoaisCol = collection(db, "tarefas_pessoais");
+
+      async function ensureEntradaLiberada() {
+        if (localStorage.getItem("entradaLiberada") === "true") return true;
+        senhaOverlay.classList.remove("hidden");
+        return new Promise((resolve) => {
+          senhaOk.onclick = async () => {
+            const s = senhaInput.value.trim();
+            if (!s) {
+              senhaMsg.textContent = "Digite a senha";
+              return;
+            }
+            try {
+              const snap = await getDoc(cfgDocRef);
+              if (!snap.exists()) {
+                senhaMsg.textContent = "Config não encontrada";
+                return;
+              }
+              const { senhaEntrada } = snap.data();
+              if (senhaEntrada && s === String(senhaEntrada)) {
+                localStorage.setItem("entradaLiberada", "true");
+                senhaOverlay.classList.add("hidden");
+                resolve(true);
+              } else {
+                senhaMsg.textContent = "Senha incorreta";
+              }
+            } catch (e) {
+              console.error(e);
+              senhaMsg.textContent = "Erro ao validar senha";
+            }
+          };
+        });
+      }
+
+      // BOTÃO DE ADMIN
+      adminBtn.addEventListener("click", () => {
+        adminKeyInput.value = "";
+        adminMsg.textContent = "";
+        adminOverlay.classList.remove("hidden");
+      });
+
+      adminCancel.addEventListener("click", () => {
+        adminOverlay.classList.add("hidden");
+      });
+
+      adminOk.addEventListener("click", async () => {
+        const key = adminKeyInput.value.trim();
+        if (!key) {
+          adminMsg.textContent = "Digite a chave!";
+          return;
+        }
+        try {
+          const snap = await getDoc(cfgDocRef);
+          if (!snap.exists()) {
+            adminMsg.textContent = "Documento de configuração não encontrado!";
+            return;
+          }
+          const { adminKeys = [] } = snap.data();
+          if (adminKeys.includes(key)) {
+            setAdmin(true);
+            adminOverlay.classList.add("hidden");
+            alert("Você agora é admin!");
+          } else {
+            adminMsg.textContent = "Chave inválida!";
+          }
+        } catch (e) {
+          console.error(e);
+          adminMsg.textContent = "Erro ao verificar chave!";
+        }
+      });
+
+      // Demais funções: tarefas, pessoais, criação
+      const turmaList = $("#turmaList"),
+        turmaEmpty = $("#turmaEmpty");
+      const pessoalList = $("#pessoalList"),
+        pessoalEmpty = $("#pessoalEmpty");
+      const pessoalInput = $("#pessoalInput"),
+        pessoalAdd = $("#pessoalAdd");
+
+      function renderTurmaItem(t) {
+        const wrap = document.createElement("div");
+        wrap.className = "item";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.dataset.tarefaId = t.id;
+        const mid = document.createElement("div");
+        mid.innerHTML = `<div class="item-title">${t.descricao}</div><div class="muted">${t.materia}</div>`;
+        const right = document.createElement("span");
+        right.className = "badge";
+        const d = t.data
+          ? new Date(t.data.seconds ? t.data.seconds * 1000 : t.data)
+          : null;
+        right.textContent = d ? d.toLocaleDateString() : "—";
+        wrap.append(cb, mid, right);
+        cb.addEventListener("change", async (ev) => {
+          await setDoc(doc(db, "status_tarefas", `${t.id}_${userId}`), {
+            tarefaId: t.id,
+            usuarioId: userId,
+            feito: ev.target.checked,
+          });
+        });
+        return wrap;
+      }
+      function renderPessoalItem(p) {
+        const wrap = document.createElement("div");
+        wrap.className = "item";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !!p.feito;
+        const mid = document.createElement("div");
+        mid.innerHTML = `<div class="item-title">${p.descricao}</div><div class="muted">Pessoal</div>`;
+        const right = document.createElement("button");
+        right.className = "btn btn-danger";
+        right.textContent = "Excluir";
+        wrap.append(cb, mid, right);
+        cb.addEventListener("change", async () => {
+          await setDoc(doc(db, "tarefas_pessoais", p.id), {
+            usuarioId: userId,
+            descricao: p.descricao,
+            feito: !!cb.checked,
+          });
+        });
+        right.addEventListener("click", async () => {
+          await setDoc(
+            doc(db, "tarefas_pessoais", p.id),
+            { _deleted: true },
+            { merge: true }
+          );
+        });
+        return wrap;
+      }
+
+      let unsubTurma = null,
+        unsubStatus = null,
+        unsubPessoais = null;
+      function bindTurma() {
+        if (unsubTurma) unsubTurma();
+        unsubTurma = onSnapshot(
+          query(tarefasTurmaCol, orderBy("data", "desc")),
+          (snap) => {
+            const tarefas = [];
+            snap.forEach((d) => tarefas.push({ id: d.id, ...d.data() }));
+            turmaList.innerHTML = "";
+            if (!tarefas.length) {
+              turmaEmpty.classList.remove("hidden");
+              return;
+            }
+            turmaEmpty.classList.add("hidden");
+            tarefas.forEach((t) => turmaList.appendChild(renderTurmaItem(t)));
+            syncStatusCheckboxes();
+          }
+        );
+      }
+      function syncStatusCheckboxes() {
+        if (unsubStatus) unsubStatus();
+        unsubStatus = onSnapshot(
+          query(statusCol, where("usuarioId", "==", userId)),
+          (snap) => {
+            const mapa = new Map();
+            snap.forEach((s) => mapa.set(s.data().tarefaId, !!s.data().feito));
+            $$('#turmaList input[type="checkbox"]').forEach((cb) => {
+              const val = mapa.get(cb.dataset.tarefaId);
+              if (val !== undefined) cb.checked = val;
+            });
+          }
+        );
+      }
+      function bindPessoais() {
+        if (unsubPessoais) unsubPessoais();
+        unsubPessoais = onSnapshot(
+          query(pessoaisCol, where("usuarioId", "==", userId)),
+          (snap) => {
+            const items = [];
+            snap.forEach((d) => {
+              const data = d.data();
+              if (!data._deleted) items.push({ id: d.id, ...data });
+            });
+            pessoalList.innerHTML = "";
+            if (!items.length) {
+              pessoalEmpty.classList.remove("hidden");
+              return;
+            }
+            pessoalEmpty.classList.add("hidden");
+            items.forEach((p) => pessoalList.appendChild(renderPessoalItem(p)));
+          }
+        );
+      }
+      pessoalAdd.addEventListener("click", async () => {
+        const desc = pessoalInput.value.trim();
+        if (!desc) return;
+        await addDoc(pessoaisCol, {
+          usuarioId: userId,
+          descricao: desc,
+          feito: false,
+        });
+        pessoalInput.value = "";
+      });
+      $("#criarBtn").addEventListener("click", async () => {
+        const desc = $("#descricao").value.trim();
+        if (!desc) {
+          alert("Preencha a descrição");
+          return;
+        }
+        await addDoc(tarefasTurmaCol, {
+          descricao: desc,
+          materia: $("#materia").value,
+          data: new Date(),
+        });
+        $("#descricao").value = "";
+        showTab("turma");
+      });
+
+      (async () => {
+        await ensureEntradaLiberada();
+        bindTurma();
+        bindPessoais();
+      })();
+    </script>
+  </body>
+</html>
